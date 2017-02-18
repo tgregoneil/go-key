@@ -1,0 +1,24 @@
+{
+  "name": "go-key",
+  "version": "1.0.0",
+  "description": "Browser key event capture",
+  "main": "index.js",
+  "devDependencies": {
+    "go-json2html": "*"
+  },
+  "scripts": {
+    "test": "keyTest.html"
+  },
+  "keywords": [],
+  "author": "T. Greg O'Neil <go22.npm@gmail.com> (http://tgregoneil.com)",
+  "license": "ISC",
+  "readme": "readme.md",
+  "homepage": "https://github.com/tgregoneil/go-key",
+  "repository": {
+    "url": "git+ssh://github.com/tgregoneil/go-key.git",
+    "type": "git"
+  },
+  "bugs": {
+    "url": "https://github.com/tgregoneil/go-key/issues"
+  }
+}
