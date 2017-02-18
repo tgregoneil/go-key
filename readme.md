@@ -60,6 +60,8 @@ $ npm install go-key
 
 ```
 
-![rendered](https://raw.githubusercontent.com/tgregoneil/go-json2html/master/testGo2Html.png) 
+Press shift-alt K
+
+![rendered](https://raw.githubusercontent.com/tgregoneil/go-key/master/keyDnStat.png) 
 
 
