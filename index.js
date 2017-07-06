@@ -388,7 +388,7 @@ _.initKeyDown = (jqSelector) => {
     $(jqSelector)
     .off('keydown')
     .keydown (function (event) {
-        console.log (' ==> initKeyDown');
+        //console.log (' ==> initKeyDown');
         _.cKeyDown (event);
     });
 
@@ -401,7 +401,7 @@ _.initKeyUp = (jqSelector) => {
     $(jqSelector)
     .off('keyup')
     .keyup (function (event) {
-        console.log (' ==> initKeyUp');
+        //console.log (' ==> initKeyUp');
         _.cKeyUp (event);
     });
 
