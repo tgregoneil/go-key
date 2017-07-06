@@ -1,13 +1,15 @@
 // go-key/index.js
 
-module.exports = function (jqSelector, reportShift, keyHandler) {
+module.exports = function (jqSelector, reportShift, keyDownHandler, reportUp, keyUpHandler) {
 
 // PRIVATE Properties/Methods
 var _ = {
 
     jqSelector: 'body',
     reportShift: false,
-    keyHandler: console.log,
+    keyDownHandler: null,
+    reportUp: false,
+    keyUpHandler: null,
 
     kShift: false,
     kCtrl: false,
@@ -190,18 +192,21 @@ _.init = () => {
     
     _.jqSelector = jqSelector ? jqSelector : 'body';
     _.reportShift = reportShift ? reportShift : false;
-    _.keyHandler = keyHandler ? keyHandler : _.defaultHandler;
+    _.keyDownHandler = keyDownHandler ? keyDownHandler : _.defaultHandler;
+    _.reportUp = reportUp ? reportUp : false;
+    _.keyUpHandler = keyUpHandler ? keyUpHandler : _.defaultHandler;
 
     P.setKeyUpDown ();
 
 }; // end _.init
 
 //---------------------
-_.cKeyDown = (event, reportShift, callback) => {
+_.cKeyDown = (event) => {
+    // callback is _.keyDownHndler
     // returns ch object reflecting which shift keys were pressed down, ch and which values
     //
-    // reportShift true => trigger callback for each keydown event of any key, 
-    //                     including any shift key
+    // _.reportShift true => trigger callback for each keydown event of any key, 
+    //                       including any shift key
     //     false => shift key event reported only when the next non-shift keydown event.
     //              So, callback is only triggered for non-shift key events
     
@@ -245,41 +250,19 @@ _.cKeyDown = (event, reportShift, callback) => {
 
     }   
 
-    if (isAShiftKey && !reportShift) {
-
-        return;
-
-    } // end if (isAShiftKey && !reportShift)
-    
-    var thisCh = _.getKeyDownCode (which);
-
-    var chOb = ({
-        shift: _.kShift,
-        ctrl: _.kCtrl,
-        alt: _.kAlt,
-        macCmd: _.kCmd,
-        which: which,
-        ch: thisCh,
-    });
-
-    if (reportShift) {
-
-        chOb.isAShiftKey = isAShiftKey;  
-            // true if any of: shift, ctrl, alt, or macCmd are true
-            // only relevant if reportShift is true
-
-    } // end if (reportShift)
-
-    callback (chOb);
+    _.cKeyUpDownFinish (isAShiftKey, which, _.keyDownHandler);
 
 }; // end _.cKeyDown 
 
 
 //---------------------
 _.cKeyUp = (event) => {
+    // callback is _.keyDownHndler
     
+    var which = event.which;
 
-    if (_.kIgnore) {
+        // never ignore 'Esc' key == 27
+    if (_.kIgnore && which != 27) {
 
         return;
 
@@ -288,28 +271,76 @@ _.cKeyUp = (event) => {
     event.preventDefault();
     event.stopPropagation ();
 
-    var which = event.which;
-
+    var isAShiftKey = true;
     switch (which) {
 
         case 16: 
             _.kShift = false;
-            return
+            break;
         case 17: 
             _.kCtrl = false;
-            return
+            break;
         case 18: 
             _.kAlt = false;
-            return
+            break;
         case 91: 
         case 92: 
         case 93: 
         case 224: 
             _.kCmd = false;
-            return
+            break;
+
+        default:
+            isAShiftKey = false;
+            break;
+
     }   
 
+    if (!_.reportUp) {
+
+        return;
+
+    } // end if (!reportUp)
+    
+    _.cKeyUpDownFinish (isAShiftKey, which, _.keyUpHandler);
+
 }; // end _.cKeyUp 
+
+//---------------------
+_.cKeyUpDownFinish = (isAShiftKey, which, callback) => {
+    
+    if (isAShiftKey && !_.reportShift) {
+
+        return;
+
+    } // end if (isAShiftKey && !_.reportShift)
+    
+    var thisCh = _.getKeyCode (which);
+
+    var chOb = ({
+        shift: _.kShift,
+        ctrl: _.kCtrl,
+        alt: _.kAlt,
+        macCmd: _.kCmd,
+        which: which,
+        ch: thisCh,
+        isAShiftKey: isAShiftKey,
+    });
+
+    /*
+    if (_.reportShift) {
+
+        chOb.isAShiftKey = isAShiftKey;  
+            // true if any of: shift, ctrl, alt, or macCmd are true
+            // only relevant if _.reportShift is true
+
+    } // end if (_.reportShift)
+    */
+
+    callback (chOb);
+
+}; // end _.cKeyUpDownFinish 
+
 
 //---------------------
 _.defaultHandler = (chOb) => {
@@ -322,7 +353,7 @@ _.defaultHandler = (chOb) => {
 
 
 //---------------------
-_.getKeyDownCode = (which) => {
+_.getKeyCode = (which) => {
     
 
     var ch;
@@ -344,21 +375,22 @@ _.getKeyDownCode = (which) => {
         ch = null;
 
     } // end if 
-    
+
     return ch;
 
-}; // end _.getKeyDownCode 
+}; // end _.getKeyCode 
 
 
 
 //---------------------
-_.initKeyDown = (jqSelector, reportShift, callback) => {
+_.initKeyDown = (jqSelector) => {
     
     $(jqSelector)
     .off('keydown')
     .keydown (function (event) {
-        _.cKeyDown (event, reportShift, callback);
-    })
+        console.log (' ==> initKeyDown');
+        _.cKeyDown (event);
+    });
 
 }; // end _.initKeyDown 
 
@@ -369,8 +401,9 @@ _.initKeyUp = (jqSelector) => {
     $(jqSelector)
     .off('keyup')
     .keyup (function (event) {
-        _.cKeyUp (event)
-    })
+        console.log (' ==> initKeyUp');
+        _.cKeyUp (event);
+    });
 
 }; // end _.initKeyUp 
 
@@ -383,7 +416,7 @@ var P = {};
 P.setKeyUpDown = () => {
     
     _.initKeyUp ('body');
-    _.initKeyDown ('body', _.reportShift, _.keyHandler);
+    _.initKeyDown ('body');
 
 }; // end P.setKeyHandler
 
@@ -394,4 +427,3 @@ _.init ();
 return P;
 
 };
-
