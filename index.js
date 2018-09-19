@@ -3,7 +3,7 @@
 module.exports = function (jqSelector, reportShift, keyDownHandler, reportUp, keyUpHandler) {
 
 // PRIVATE Properties/Methods
-var _ = {
+var v = {
 
     jqSelector: 'body',
     reportShift: false,
@@ -187,33 +187,60 @@ var _ = {
 
 
 }; // end PRIVATE properties
+var f={};
 //---------------------
-_.init = () => {
+f.init = () => {
     
-    _.jqSelector = jqSelector ? jqSelector : 'body';
-    _.reportShift = reportShift ? reportShift : false;
-    _.keyDownHandler = keyDownHandler ? keyDownHandler : _.defaultHandler;
-    _.reportUp = reportUp ? reportUp : false;
-    _.keyUpHandler = keyUpHandler ? keyUpHandler : _.defaultHandler;
+    v.jqSelector = jqSelector ? jqSelector : 'body';
+    v.reportShift = reportShift ? reportShift : false;
+    v.keyDownHandler = keyDownHandler ? keyDownHandler : f.defaultHandler;
+    v.reportUp = reportUp ? reportUp : false;
+    v.keyUpHandler = keyUpHandler ? keyUpHandler : f.defaultHandler;
 
-    P.setKeyUpDown ();
+    //P.setKeyOn (v.jqSelector);
+    P.setKeyOn ();
+    if (!_m0.keyEvents) {
 
-}; // end _.init
+        _m0.keyEvents = {};
+        /*
+            // override jquery's remove function to turn on all key handlers after removal of a form
+        var rmOrig = $.fn.remove;
+        $.fn.remove = function (){
+
+            $(this)
+            .has ('form')
+            .each (function () {
+                P.allKeysOn ();
+            });
+
+            rmOrig.apply (this, arguments);
+        }
+        */
+
+    } // end if (!_m0.keyEvents)
+
+    var keyEvents = _m0.keyEvents;
+    keyEvents [v.jqSelector] = {on: P.setKeyOn, off: P.setKeyOff};
+    
+
+}; // end f.init
 
 //---------------------
-_.cKeyDown = (event) => {
-    // callback is _.keyDownHndler
+f.cKeyDown = (event) => {
+    // callback is v.keyDownHndler
     // returns ch object reflecting which shift keys were pressed down, ch and which values
     //
-    // _.reportShift true => trigger callback for each keydown event of any key, 
+    // v.reportShift true => trigger callback for each keydown event of any key, 
     //                       including any shift key
     //     false => shift key event reported only when the next non-shift keydown event.
     //              So, callback is only triggered for non-shift key events
     
+    //console.log ('go-key.cKeyDown jqSelector: ' + v.jqSelector);
+
     var which = event.which;
 
         // never ignore 'Esc' key == 27
-    if (_.kIgnore && which != 27) {
+    if (v.kIgnore && which != 27) {
 
         return;
 
@@ -226,22 +253,22 @@ _.cKeyDown = (event) => {
     switch (which) {
 
         case 16: 
-            _.kShift = true;
+            v.kShift = true;
             break;
 
         case 17: 
-            _.kCtrl = true;
+            v.kCtrl = true;
             break;
 
         case 18: 
-            _.kAlt = true;
+            v.kAlt = true;
             break;
 
         case 91: 
         case 92: 
         case 93: 
         case 224:
-            _.kCmd = true;
+            v.kCmd = true;
             break;
 
         default:
@@ -250,19 +277,29 @@ _.cKeyDown = (event) => {
 
     }   
 
-    _.cKeyUpDownFinish (isAShiftKey, which, _.keyDownHandler);
+    f.cKeyUpDownFinish (isAShiftKey, which, v.keyDownHandler);
 
-}; // end _.cKeyDown 
+    if (!isAShiftKey) {
+
+        v.kShift = false;
+        v.kCtrl = false;
+        v.kAlt = false;
+        v.kCmd = false;
+
+    } // end if (!isAShiftKey)
+    
+
+}; // end f.cKeyDown 
 
 
 //---------------------
-_.cKeyUp = (event) => {
-    // callback is _.keyDownHndler
+f.cKeyUp = (event) => {
+    // callback is v.keyDownHndler
     
     var which = event.which;
 
         // never ignore 'Esc' key == 27
-    if (_.kIgnore && which != 27) {
+    if (v.kIgnore && which != 27) {
 
         return;
 
@@ -275,19 +312,19 @@ _.cKeyUp = (event) => {
     switch (which) {
 
         case 16: 
-            _.kShift = false;
+            v.kShift = false;
             break;
         case 17: 
-            _.kCtrl = false;
+            v.kCtrl = false;
             break;
         case 18: 
-            _.kAlt = false;
+            v.kAlt = false;
             break;
         case 91: 
         case 92: 
         case 93: 
         case 224: 
-            _.kCmd = false;
+            v.kCmd = false;
             break;
 
         default:
@@ -296,79 +333,80 @@ _.cKeyUp = (event) => {
 
     }   
 
-    if (!_.reportUp) {
+    if (!v.reportUp) {
 
         return;
 
     } // end if (!reportUp)
     
-    _.cKeyUpDownFinish (isAShiftKey, which, _.keyUpHandler);
+    f.cKeyUpDownFinish (isAShiftKey, which, v.keyUpHandler);
 
-}; // end _.cKeyUp 
+}; // end f.cKeyUp 
 
 //---------------------
-_.cKeyUpDownFinish = (isAShiftKey, which, callback) => {
+f.cKeyUpDownFinish = (isAShiftKey, which, callback) => {
     
-    if (isAShiftKey && !_.reportShift) {
+    if (isAShiftKey && !v.reportShift) {
 
         return;
 
-    } // end if (isAShiftKey && !_.reportShift)
+    } // end if (isAShiftKey && !v.reportShift)
     
-    var thisCh = _.getKeyCode (which);
+    var thisCh = f.getKeyCode (which);
 
     var chOb = ({
-        shift: _.kShift,
-        ctrl: _.kCtrl,
-        alt: _.kAlt,
-        macCmd: _.kCmd,
+        shift: v.kShift,
+        ctrl: v.kCtrl,
+        alt: v.kAlt,
+        macCmd: v.kCmd,
         which: which,
         ch: thisCh,
         isAShiftKey: isAShiftKey,
     });
 
+    // console.log ('chOb: ' + JSON.stringify (chOb) + '\n');
     /*
-    if (_.reportShift) {
+    if (v.reportShift) {
 
         chOb.isAShiftKey = isAShiftKey;  
             // true if any of: shift, ctrl, alt, or macCmd are true
-            // only relevant if _.reportShift is true
+            // only relevant if v.reportShift is true
 
-    } // end if (_.reportShift)
+    } // end if (v.reportShift)
     */
 
     callback (chOb);
 
-}; // end _.cKeyUpDownFinish 
+}; // end f.cKeyUpDownFinish 
 
 
 //---------------------
-_.defaultHandler = (chOb) => {
+f.defaultHandler = (chOb) => {
     
     var chObS = JSON.stringify (chOb);
-    console.log ('key._.defaultHandler.chOb: ' + chObS);
+    console.log ('go-key.defaultHandler.chOb: ' + chObS);
 
-}; // end _.defaultHandler 
+}; // end f.defaultHandler 
 
 
 
 //---------------------
-_.getKeyCode = (which) => {
+f.getKeyCode = (which) => {
     
 
     var ch;
 
-    if (_.ctrlOrNonAscii.hasOwnProperty (which)) {
+    if (v.ctrlOrNonAscii.hasOwnProperty (which)) {
 
-        ch = _.ctrlOrNonAscii [which];
+        ch = v.ctrlOrNonAscii [which];
 
-    } else if (_.kShift && _.asciiShifted.hasOwnProperty (which)) {
+    } else if (v.kShift && v.asciiShifted.hasOwnProperty (which)) {
 
-        ch = _.asciiShifted [which];
+        ch = v.asciiShifted [which];
 
-    } else if (!_.kShift && _.asciiUnShifted.hasOwnProperty (which)) {
+    } else if (!v.kShift && v.asciiUnShifted.hasOwnProperty (which)) {
 
-        ch = _.asciiUnShifted [which];
+        ch = v.asciiUnShifted [which];
 
     } else {
 
@@ -378,34 +416,34 @@ _.getKeyCode = (which) => {
 
     return ch;
 
-}; // end _.getKeyCode 
+}; // end f.getKeyCode 
 
 
 
 //---------------------
-_.initKeyDown = (jqSelector) => {
+f.initKeyDown = (jqSelector) => {
     
     $(jqSelector)
     .off('keydown')
     .keydown (function (event) {
         //console.log (' ==> initKeyDown');
-        _.cKeyDown (event);
+        f.cKeyDown (event);
     });
 
-}; // end _.initKeyDown 
+}; // end f.initKeyDown 
 
 
 //---------------------
-_.initKeyUp = (jqSelector) => {
+f.initKeyUp = (jqSelector) => {
     
     $(jqSelector)
     .off('keyup')
     .keyup (function (event) {
         //console.log (' ==> initKeyUp');
-        _.cKeyUp (event);
+        f.cKeyUp (event);
     });
 
-}; // end _.initKeyUp 
+}; // end f.initKeyUp 
 
 
 
@@ -413,16 +451,59 @@ _.initKeyUp = (jqSelector) => {
 var P = {};
 
 //---------------------
-P.setKeyUpDown = () => {
+P.allKeysOff = () => {
     
-    _.initKeyUp ('body');
-    _.initKeyDown ('body');
+    var keyEvents = _m0.keyEvents;
+    var keySels = Object.keys (keyEvents);
+
+    keySels.forEach (function (el) {
+
+        keyEvents [el].off ();
+    });
+
+}; // end P.allKeysOff
+
+
+//---------------------
+P.allKeysOn = () => {
+    
+    var keyEvents = _m0.keyEvents;
+    var keySels = Object.keys (keyEvents);
+
+    keySels.forEach (function (el) {
+
+        keyEvents [el].on ();
+    });
+
+}; // end P.allKeysOn
+
+
+//---------------------
+P.setKeyOff = () => {
+    
+        //console.log ('SETKEYOFF go-key.setKeyOff     jqSelector = ' + v.jqSelector);
+    $(v.jqSelector)
+    .off ('keydown')
+    .off ('keyup');
+
+}; // end P.setKeyOff
+
+
+//---------------------
+//P.setKeyOn = (jqSel) => {
+P.setKeyOn = () => {
+    
+        //console.log ('SETKEYON go-key.setKeyOn   jqSelector = ' + v.jqSelector);
+    //f.initKeyUp (jqSel);
+    //f.initKeyDown (jqSel);
+    f.initKeyUp (v.jqSelector);
+    f.initKeyDown (v.jqSelector);
 
 }; // end P.setKeyHandler
 
 // end PUBLIC section
 
-_.init ();
+f.init ();
 
 return P;
 
